@@ -97,6 +97,31 @@ std::string get_absolute_path(std::string relative_path) {
   return file->get_path();
 }
 
+bool setup_job_target(Job& job)
+{
+	// Set the Canvas on the Target
+	if(job.target)
+	{
+		VERBOSE_OUT(4) << _("Setting the canvas on the target...") << std::endl;
+		job.target->set_canvas(job.canvas);
+
+		VERBOSE_OUT(4) << _("Setting the quality of the target...") << std::endl;
+		job.target->set_quality(job.quality);
+
+		if (job.alpha_mode!=TARGET_ALPHA_MODE_KEEP)
+		{
+			VERBOSE_OUT(4) << _("Setting the alpha mode of the target...") << std::endl;
+			job.target->set_alpha_mode(job.alpha_mode);
+		}
+	}
+
+	// Set the threads for the target
+	if (job.target && Target_Scanline::Handle::cast_dynamic(job.target))
+		Target_Scanline::Handle::cast_dynamic(job.target)->set_threads(SynfigToolGeneralOptions::instance()->get_threads());
+
+	return true;
+}
+
 bool setup_job(Job& job, const TargetParam& target_parameters)
 {
 	VERBOSE_OUT(4) << _("Attempting to determine target/outfile...") << std::endl;
@@ -196,28 +221,7 @@ bool setup_job(Job& job, const TargetParam& target_parameters)
 
 		job.sifout=false;
 	}
-
-	// Set the Canvas on the Target
-	if(job.target)
-	{
-		VERBOSE_OUT(4) << _("Setting the canvas on the target...") << std::endl;
-		job.target->set_canvas(job.canvas);
-
-		VERBOSE_OUT(4) << _("Setting the quality of the target...") << std::endl;
-		job.target->set_quality(job.quality);
-
-		if (job.alpha_mode!=TARGET_ALPHA_MODE_KEEP)
-		{
-			VERBOSE_OUT(4) << _("Setting the alpha mode of the target...") << std::endl;
-			job.target->set_alpha_mode(job.alpha_mode);
-		}
-	}
-
-	// Set the threads for the target
-	if (job.target && Target_Scanline::Handle::cast_dynamic(job.target))
-		Target_Scanline::Handle::cast_dynamic(job.target)->set_threads(SynfigToolGeneralOptions::instance()->get_threads());
-
-	return true;
+	return setup_job_target(job);
 }
 
 void process_job (Job& job)
@@ -270,10 +274,16 @@ void process_job (Job& job)
 		double total_duration = 0.f;
 		int repeats = SynfigToolGeneralOptions::instance()->get_repeats();
 
+		Target::Handle target = job.target;
+		job.target = Target::create("null", "null", TargetParam());
+		setup_job_target(job);
+
 		for(int i = 0; i < repeats; i++)
 		{
 			std::chrono::steady_clock::time_point start_timepoint =
 				std::chrono::steady_clock::now();
+
+			if(i == repeats - 1) job.target = target;
 
 			// Call the render member of the target
 			if(!job.target->render(&p))
