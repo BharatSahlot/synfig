@@ -445,6 +445,7 @@ public:
 	int get_width()const {return w_;}
 	int get_height()const {return h_;}
 	int get_pitch()const {return pitch_;}
+	value_type* get_data() { return data_; }
 };
 
 /**

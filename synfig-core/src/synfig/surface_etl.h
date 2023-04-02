@@ -447,6 +447,8 @@ public:
 		;
 	}
 
+	value_type* get_data() { return data_; }
+
 	operator bool()const { return is_valid(); }
 
 	pen begin() { assert(data_); return pen(data_,w_,h_,pitch_); }

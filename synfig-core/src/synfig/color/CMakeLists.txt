@@ -8,6 +8,8 @@ target_sources(libsynfig
 file(GLOB COLOR_HEADERS "${CMAKE_CURRENT_LIST_DIR}/*.h")
 set(COLOR_HEADERS ${COLOR_HEADERS} "${CMAKE_CURRENT_LIST_DIR}/color.hpp")
 
+add_compile_options(-ftree-vectorizer-verbose=2)
+
 install(
     FILES ${COLOR_HEADERS}
     DESTINATION include/synfig/color

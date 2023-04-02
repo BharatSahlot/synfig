@@ -24,3 +24,6 @@ endif(WITH_OPENGL)
 
 include(${CMAKE_CURRENT_LIST_DIR}/primitive/CMakeLists.txt)
 include(${CMAKE_CURRENT_LIST_DIR}/software/CMakeLists.txt)
+
+# add_definitions(-DDEBUG_THREAD_TASK)
+# add_definitions(-DDEBUG_THREAD_WAIT)

@@ -26,6 +26,8 @@
 
 /* === H E A D E R S ======================================================= */
 
+#include "synfig/color/colorblendingfunctions.h"
+#include "synfig/general.h"
 #ifdef USING_PCH
 #	include "pch.h"
 #else
@@ -136,6 +138,26 @@ synfig::Surface::clear()
 #endif
 }
 
+#define gen_blend(func) \
+	if(pen.get_blend_method() == Color::BLEND_##func) \
+	{ \
+		/* info("using new mult"); */ \
+		Color* src = (Color*)((char*)get_data() + y * get_pitch()) + x; \
+		Color* dest = pen.get_data(); \
+\
+		const float alpha = pen.get_alpha(); \
+		for(int i = 0; i < h; i++) \
+		{ \
+			for(int j = 0; j < w; j++) \
+			{ \
+				dest[j] = blendfuncf_##func(src[j], dest[j], alpha); \
+			} \
+			src = (Color*)((char*)src + get_pitch()); \
+			dest = (Color*)((char*)dest + get_pitch()); \
+		} \
+		return; \
+	}
+
 void
 synfig::Surface::blit_to(alpha_pen& pen, int x, int y, int w, int h)
 {
@@ -236,6 +258,59 @@ synfig::Surface::blit_to(alpha_pen& pen, int x, int y, int w, int h)
 		return;
 	}
 #endif
+
+	// gen_blend(MULTIPLY);
+	// gen_blend(STRAIGHT);
+	// gen_blend(COMPOSITE);
+	// gen_blend(ONTO);
+	// gen_blend(SCREEN);
+	// gen_blend(OVERLAY);
+	// gen_blend(ADD);
+	// gen_blend(SUBTRACT);
+	if(pen.get_blend_method() == Color::BLEND_COMPOSITE)
+	{
+		if(x>= get_w() || y>= get_h())
+			return;
+
+		//clip source origin
+		if(x<0)
+		{
+			w+=x;	//decrease
+			x=0;
+		}
+
+		if(y<0)
+		{
+			h+=y;	//decrease
+			y=0;
+		}
+
+		//clip width against dest width
+		w = std::min((long)w,(long)(pen.end_x()-pen.x()));
+		h = std::min((long)h,(long)(pen.end_y()-pen.y()));
+
+		//clip width against src width
+		w = std::min(w, get_w() - x);
+		h = std::min(h, get_h() - y);
+
+		if(w<=0 || h<=0)
+			return;
+
+		Color* src = (Color*)((char*)get_data() + y * get_pitch()) + x;
+		Color* dest = pen.get_data();
+
+		const float alpha = pen.get_alpha();
+		for(int i = 0; i < h; i++)
+		{
+			for(int j = 0; j < w; j++)
+			{
+				dest[j] = blendfuncf_COMPOSITE(src[j], dest[j], alpha);
+			}
+			src = (Color*)((char*)src + get_pitch());
+			dest = (Color*)((char*)dest + pen.get_pitch());
+		}
+		return;
+	}
 	surface<Color, ColorPrep>::blit_to(pen,x,y,w,h);
 }
 

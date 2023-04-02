@@ -34,13 +34,14 @@
 #include <synfig/color.h>
 #include <synfig/real.h>
 #include <algorithm>
+#include <cassert>
 
 namespace synfig {
 
 typedef Color (*blendfunc)(Color &,Color &,float);
 
 template <class C>
-C blendfunc_COMPOSITE(C &src,C &dest,float amount)
+inline C blendfunc_COMPOSITE(C &src,C &dest,float amount)
 {
 	//c_dest'=c_src+(1.0-a_src)*c_dest
 	//a_dest'=a_src+(1.0-a_src)*a_dest
@@ -72,6 +73,54 @@ C blendfunc_COMPOSITE(C &src,C &dest,float amount)
 	}
 	assert(dest.is_valid());
 	return dest;
+}
+
+template <class C>
+C blendfuncf_COMPOSITE(C src,C dest, float amount)
+{
+	const float sa = src.get_a() * amount;
+	const float da = dest.get_a();
+
+	if(fabsf(sa) <= COLOR_EPSILON && fabsf(da) <= COLOR_EPSILON)
+	{
+		return C::alpha();
+	}
+
+	const float a = sa + da * (C::ceil - sa);
+
+	const float sr = src.get_r(), sg = src.get_g(), sb = src.get_b();
+	const float dr = dest.get_r(), dg = dest.get_g(), db = dest.get_b();
+
+	const float r = (sr * sa + dr * da * (C::ceil - sa)) / a;
+	const float g = (sg * sa + dg * da * (C::ceil - sa)) / a;
+	const float b = (sb * sa + db * da * (C::ceil - sa)) / a;
+
+	return C(r, g, b, a);
+
+	// float a_src = src.get_a() * amount;
+	// float a_dest = dest.get_a();
+	// const float one(C::ceil); 
+	//
+	// // Scale the source and destination by their alpha values
+	// src *= a_src;
+	// dest *= a_dest;
+	//
+	// dest = src + dest * (one - a_src);
+	//
+	// a_dest = a_src + a_dest * (one - a_src);
+	//
+	// // if a_dest!=0.0
+	// if(fabsf(a_dest) > COLOR_EPSILON)
+	// {
+	// 	dest /= a_dest;
+	// 	dest.set_a(a_dest);
+	// }
+	// else
+	// {
+	// 	dest = C::alpha();
+	// }
+	// assert(dest.is_valid());
+	// return dest;
 }
 
 template <class C>
@@ -242,6 +291,25 @@ C blendfunc_MULTIPLY(C &a,C &b,float amount)
 	b.set_g(((b.get_g()*a.get_g())-b.get_g())*(amount)+b.get_g());
 	b.set_b(((b.get_b()*a.get_b())-b.get_b())*(amount)+b.get_b());
 	return b;
+}
+
+template <class C, int S>
+C* blendfunc_MULTIPLY(const C* ar, C* br, float am)
+{
+	for(int i = 0; i < S; i++)
+	{
+		C a = ar[i];
+		C& b = br[i];
+
+		float amount = am;
+		if(amount<0) a=~a, amount=-amount;
+
+		amount*=a.get_a();
+		b.set_r(((b.get_r()*a.get_r())-b.get_r())*(amount)+b.get_r());
+		b.set_g(((b.get_g()*a.get_g())-b.get_g())*(amount)+b.get_g());
+		b.set_b(((b.get_b()*a.get_b())-b.get_b())*(amount)+b.get_b());
+	}
+	return br;
 }
 
 template <class C>
