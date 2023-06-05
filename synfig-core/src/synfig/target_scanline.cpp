@@ -49,6 +49,8 @@
 #include "rendering/software/surfacesw.h"
 #include "rendering/common/task/tasktransformation.h"
 
+#include <vector>
+
 #endif
 
 /* === U S I N G =========================================================== */
@@ -80,6 +82,41 @@ int
 Target_Scanline::next_frame(Time& time)
 {
 	return Target::next_frame(time);
+}
+
+rendering::Task::Handle
+get_rendering_task(
+	const rendering::Renderer::Handle renderer,
+	const etl::handle<rendering::SurfaceResource> &surface,
+	Canvas &canvas,
+	const ContextParams &context_params,
+	const RendDesc &renddesc )
+{
+	surface->create(renddesc.get_w(), renddesc.get_h());
+	rendering::Task::Handle task = canvas.build_rendering_task(context_params);
+
+	if (task)
+	{
+		Vector p0 = renddesc.get_tl();
+		Vector p1 = renddesc.get_br();
+		if (p0[0] > p1[0] || p0[1] > p1[1]) {
+			Matrix m;
+			if (p0[0] > p1[0]) { m.m00 = -1.0; m.m20 = p0[0] + p1[0]; std::swap(p0[0], p1[0]); }
+			if (p0[1] > p1[1]) { m.m11 = -1.0; m.m21 = p0[1] + p1[1]; std::swap(p0[1], p1[1]); }
+			TaskTransformationAffine::Handle t = new TaskTransformationAffine();
+			t->transformation->matrix = m;
+			t->sub_task() = task;
+			task = t;
+		}
+
+		task->target_surface = surface;
+		task->target_rect = RectInt( VectorInt(), surface->get_size() );
+		task->source_rect = Rect(p0, p1);
+
+		rendering::Task::List list;
+		list.push_back(task);
+	}
+	return task;
 }
 
 bool
@@ -172,7 +209,7 @@ synfig::Target_Scanline::render(ProgressCallback *cb)
 				#if USE_PIXELRENDERING_LIMIT
 				if(desc.get_w()*desc.get_h() > PIXEL_RENDERING_LIMIT)
 				{
-					SurfaceResource::Handle surface = new SurfaceResource();
+					// SurfaceResource::Handle surface = new SurfaceResource();
 
 					int rowheight = PIXEL_RENDERING_LIMIT/desc.get_w();
 					if (!rowheight) rowheight = 1; // TODO: render partial lines to stay within the limit?
@@ -193,9 +230,14 @@ synfig::Target_Scanline::render(ProgressCallback *cb)
 						return false;
 					}
 
+					rendering::Renderer::Handle renderer = rendering::Renderer::get_renderer(get_engine());
+					std::vector<SurfaceResource::Handle> surfaces;
+
+					rendering::Task::List list;
+
 					for(int i=0; i < rows; ++i)
 					{
-						surface->reset();
+						SurfaceResource::Handle surface = new SurfaceResource();
 						RendDesc blockrd = desc;
 
 						//render the strip at the normal size unless it's the last one...
@@ -209,28 +251,58 @@ synfig::Target_Scanline::render(ProgressCallback *cb)
 							blockrd.set_subwindow(0,i*rowheight,desc.get_w(),rowheight);
 						}
 
+						surfaces.push_back(surface);
+						list.push_back(get_rendering_task(renderer, surface, *canvas, context_params, blockrd));
+
 						//synfig::info( " -- block %d/%d left, top, width, height: %d, %d, %d, %d",
 						//	i+1, rows, 0, i*rowheight, blockrd.get_w(), blockrd.get_h() );
 
-						if (!call_renderer(surface, *canvas, context_params, blockrd))
-						{
-							if(cb)cb->error(_("Accelerated Renderer Failure"));
-							return false;
-						} else {
-							SurfaceResource::LockRead<SurfaceSW> lock(surface);
-							if (!lock) {
-								if(cb)cb->error(_("Accelerated Renderer Failure: cannot read surface"));
-								return false;
-							}
-
-							const synfig::Surface &s = lock->get_surface();
-
-							int yoff = i*rowheight;
-
-							if(!process_block_alpha(s, s.get_w(), blockrd.get_h(), yoff, cb)) return false;
-						}
+						// if (!call_renderer(surface, *canvas, context_params, blockrd))
+						// {
+						// 	if(cb)cb->error(_("Accelerated Renderer Failure"));
+						// 	return false;
+						// } else {
+						// 	SurfaceResource::LockRead<SurfaceSW> lock(surface);
+						// 	if (!lock) {
+						// 		if(cb)cb->error(_("Accelerated Renderer Failure: cannot read surface"));
+						// 		return false;
+						// 	}
+						//
+						// 	const synfig::Surface &s = lock->get_surface();
+						//
+						// 	int yoff = i*rowheight;
+						//
+						// 	if(!process_block_alpha(s, s.get_w(), blockrd.get_h(), yoff, cb)) return false;
+						// }
 					}
-					surface->reset();
+					renderer->run(list);
+
+					for(int i = 0; i < rows; ++i)
+					{
+						RendDesc blockrd = desc;
+
+						//render the strip at the normal size unless it's the last one...
+						if(i == rows-1)
+						{
+							if(!lastrowheight) break;
+							blockrd.set_subwindow(0,i*rowheight,desc.get_w(),lastrowheight);
+						}
+						else
+						{
+							blockrd.set_subwindow(0,i*rowheight,desc.get_w(),rowheight);
+						}
+
+						SurfaceResource::LockRead<SurfaceSW> lock(surfaces[i]);
+						if (!lock) {
+							if(cb)cb->error(_("Accelerated Renderer Failure: cannot read surface"));
+							return false;
+						}
+
+						const synfig::Surface &s = lock->get_surface();
+						int yoff = i*rowheight;
+
+						if(!process_block_alpha(s, s.get_w(), blockrd.get_h(), yoff, cb)) return false;
+					}
 
 					end_frame();
 
