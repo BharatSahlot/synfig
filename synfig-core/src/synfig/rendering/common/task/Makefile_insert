@@ -5,7 +5,8 @@ RENDERING_COMMON_TASK_HH = \
 	rendering/common/task/tasklayer.h \
 	rendering/common/task/taskmesh.h \
 	rendering/common/task/taskpixelprocessor.h \
-	rendering/common/task/tasktransformation.h
+	rendering/common/task/tasktransformation.h \
+	rendering/common/task/tasktile.h
 
 RENDERING_COMMON_TASK_CC = \
 	rendering/common/task/taskblend.cpp \
@@ -14,7 +15,8 @@ RENDERING_COMMON_TASK_CC = \
 	rendering/common/task/tasklayer.cpp \
 	rendering/common/task/taskmesh.cpp \
 	rendering/common/task/taskpixelprocessor.cpp \
-	rendering/common/task/tasktransformation.cpp
+	rendering/common/task/tasktransformation.cpp \
+	rendering/common/task/tasktile.cpp
 
 RENDERING_COMMON_HH += \
     $(RENDERING_COMMON_TASK_HH)

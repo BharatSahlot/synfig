@@ -8,5 +8,6 @@ target_sources(libsynfig
         "${CMAKE_CURRENT_LIST_DIR}/taskpixelcolormatrixsw.cpp"
         "${CMAKE_CURRENT_LIST_DIR}/taskpixelgammasw.cpp"
         "${CMAKE_CURRENT_LIST_DIR}/tasktransformationaffinesw.cpp"
+        "${CMAKE_CURRENT_LIST_DIR}/tasktilesw.cpp"
         "${CMAKE_CURRENT_LIST_DIR}/tasksw.cpp"
 )

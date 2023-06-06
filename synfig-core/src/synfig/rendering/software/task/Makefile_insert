@@ -10,7 +10,8 @@ RENDERING_SOFTWARE_TASK_CC = \
 	rendering/software/task/taskpixelcolormatrixsw.cpp \
 	rendering/software/task/taskpixelgammasw.cpp \
 	rendering/software/task/tasksw.cpp \
-	rendering/software/task/tasktransformationaffinesw.cpp
+	rendering/software/task/tasktransformationaffinesw.cpp \
+	rendering/software/task/tasktilesw.cpp
 
 RENDERING_SOFTWARE_HH += \
     $(RENDERING_SOFTWARE_TASK_HH)

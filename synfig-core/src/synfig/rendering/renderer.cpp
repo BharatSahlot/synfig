@@ -484,6 +484,8 @@ Renderer::optimize_recursive(
 		return;
 }
 
+#define DEBUG_OPTIMIZATION 1
+
 void
 Renderer::optimize(Task::List &list) const
 {

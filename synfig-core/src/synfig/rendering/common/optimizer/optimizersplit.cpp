@@ -35,6 +35,8 @@
 #include <synfig/general.h>
 #include <synfig/localization.h>
 
+#include "../task/tasktile.h"
+#include "../../software/task/tasksw.h"
 #include "optimizersplit.h"
 
 #endif
@@ -54,38 +56,34 @@ OptimizerSplit::OptimizerSplit()
 {
 	category_id = CATEGORY_ID_LIST;
 	depends_from = CATEGORY_SPECIALIZED;
+	// affects_to = CATEGORY_ID_SPECIALIZED;
 	for_list = true;
 }
+
 
 void
 OptimizerSplit::run(const RunParams &params) const
 {
 	if (!params.list) return;
-	const int min_area = 256*256;
+	const int tile_height = 500;
 	for(Task::List::iterator i = params.list->begin(); i != params.list->end(); ++i)
 	{
 		if (TaskInterfaceSplit *split = i->type_pointer<TaskInterfaceSplit>())
 		if (split->is_splittable())
 		{
-			RectInt r = (*i)->target_rect;
-			int w = r.maxx - r.minx;
-			int h = r.maxy - r.miny;
-			int t = std::min(h/10, w*h/min_area);
-			if (t >= 2)
-			{
-				int hh = h/t;
-				int y = r.miny;
-				for(int j = 1; j < t; ++j, y += hh)
-				{
-					Task::Handle task = (*i)->clone();
-					task->trunc_target_rect( RectInt(r.minx, y, r.maxx, y + hh) );
-					i = params.list->insert(i, task);
-					++i;
-				}
-				*i = (*i)->clone();
-				(*i)->trunc_target_rect( RectInt(r.minx, y, r.maxx, r.maxy) );
-				apply(params);
-			}
+			TaskTile::Handle tile(new TaskTile());
+			// tile = tile->convert_to(TaskSW::mode_token.handle());
+
+			Task::List list = tile->create_tiles(*i, tile_height);
+			if(list.empty()) continue;
+
+			*i = tile->convert_to(TaskSW::mode_token.handle());
+
+			params.list->insert(i, list.begin(), list.end());
+
+			i += list.size();
+
+			apply(params);
 		}
 	}
 }

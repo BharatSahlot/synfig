@@ -7,6 +7,7 @@ target_sources(libsynfig
         "${CMAKE_CURRENT_LIST_DIR}/taskmesh.cpp"
         "${CMAKE_CURRENT_LIST_DIR}/taskpixelprocessor.cpp"
         "${CMAKE_CURRENT_LIST_DIR}/tasktransformation.cpp"
+        "${CMAKE_CURRENT_LIST_DIR}/tasktile.cpp"
 )
 
 install_all_headers(rendering/common/task)
