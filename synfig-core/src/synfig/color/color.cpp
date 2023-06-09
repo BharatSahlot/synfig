@@ -199,6 +199,13 @@ Color::clamped()const
 	return(ret);
 }
 
+Color
+Color::blend(Color a, Color b, float amount)
+{
+	if(fabsf(amount)<=COLOR_EPSILON) return b;
+	return blendfunc_COMPOSITE(a, b, amount);
+}
+
 
 Color
 Color::blend(Color a, Color b, float amount, Color::BlendMethod type)
@@ -241,3 +248,104 @@ Color::blend(Color a, Color b, float amount, Color::BlendMethod type)
 	return vtable[type](a,b,amount);
 }
 
+template<typename OP>
+void blendfunc_buf(const Color* src, Color* dest, float amount, size_t n, OP op)
+{
+	for(size_t i = 0; i < n; i++)
+	{
+		dest[i] = op(src[i], dest[i], amount);
+	}
+}
+
+
+void
+Color::blend_buf(const Color *src, Color *dest, float amount, size_t n, const Color::BlendMethod type)
+{
+	if(fabsf(amount)<=COLOR_EPSILON) return;
+
+	assert(type<BLEND_END);
+
+	switch(type)
+	{
+		case BLEND_COMPOSITE:
+			blendfunc_buf(src, dest, amount, n, blendfunc_COMPOSITE<Color>);
+			break;
+		case BLEND_STRAIGHT:
+			blendfunc_buf(src, dest, amount, n, blendfunc_STRAIGHT<Color>);
+			break;
+		case BLEND_ONTO:
+			blendfunc_buf(src, dest, amount, n, blendfunc_ONTO<Color>);
+			break;
+		case BLEND_STRAIGHT_ONTO:
+			blendfunc_buf(src, dest, amount, n, blendfunc_STRAIGHT_ONTO<Color>);
+			break;
+		case BLEND_BEHIND:
+			blendfunc_buf(src, dest, amount, n, blendfunc_BEHIND<Color>);
+			break;
+		case BLEND_SCREEN:
+			blendfunc_buf(src, dest, amount, n, blendfunc_SCREEN<Color>);
+			break;
+		case BLEND_OVERLAY:
+			blendfunc_buf(src, dest, amount, n, blendfunc_OVERLAY<Color>);
+			break;
+		case BLEND_HARD_LIGHT:
+			blendfunc_buf(src, dest, amount, n, blendfunc_HARD_LIGHT<Color>);
+			break;
+		case BLEND_MULTIPLY:
+			blendfunc_buf(src, dest, amount, n, blendfunc_MULTIPLY<Color>);
+			break;
+		case BLEND_DIVIDE:
+			blendfunc_buf(src, dest, amount, n, blendfunc_DIVIDE<Color>);
+			break;
+		case BLEND_ADD:
+			blendfunc_buf(src, dest, amount, n, blendfunc_ADD<Color>);
+			break;
+		case BLEND_ADD_COMPOSITE:
+			blendfunc_buf(src, dest, amount, n, blendfunc_ADD_COMPOSITE<Color>);
+			break;
+		case BLEND_SUBTRACT:
+			blendfunc_buf(src, dest, amount, n, blendfunc_SUBTRACT<Color>);
+			break;
+		case BLEND_DIFFERENCE:
+			blendfunc_buf(src, dest, amount, n, blendfunc_DIFFERENCE<Color>);
+			break;
+		case BLEND_BRIGHTEN:
+			blendfunc_buf(src, dest, amount, n, blendfunc_BRIGHTEN<Color>);
+			break;
+		case BLEND_DARKEN:
+			blendfunc_buf(src, dest, amount, n, blendfunc_DARKEN<Color>);
+			break;
+		case BLEND_COLOR:
+			blendfunc_buf(src, dest, amount, n, blendfunc_COLOR<Color>);
+			break;
+		case BLEND_HUE:
+			blendfunc_buf(src, dest, amount, n, blendfunc_HUE<Color>);
+			break;
+		case BLEND_SATURATION:
+			blendfunc_buf(src, dest, amount, n, blendfunc_SATURATION<Color>);
+			break;
+		case BLEND_LUMINANCE:
+			blendfunc_buf(src, dest, amount, n, blendfunc_LUMINANCE<Color>);
+			break;
+		case BLEND_ALPHA_BRIGHTEN:
+			blendfunc_buf(src, dest, amount, n, blendfunc_ALPHA_BRIGHTEN<Color>);
+			break;
+		case BLEND_ALPHA_DARKEN:
+			blendfunc_buf(src, dest, amount, n, blendfunc_ALPHA_DARKEN<Color>);
+			break;
+		case BLEND_ALPHA_OVER:
+			blendfunc_buf(src, dest, amount, n, blendfunc_ALPHA_OVER<Color>);
+			break;
+		case BLEND_ALPHA:
+			blendfunc_buf(src, dest, amount, n, blendfunc_ALPHA<Color>);
+			break;
+	}
+}
+
+void
+Color::blend_buf(Color *srcA, Color srcB, Color *dest, float amount, size_t n, const Color::BlendMethod type)
+{
+	for(size_t i = 0; i < n; i++) dest[i] = srcB;
+
+	blend_buf(srcA, dest, amount, n, type);
+}

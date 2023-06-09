@@ -73,6 +73,8 @@ using namespace rendering;
 //#define DEBUG_OPTIMIZATION_EACH_CHANGE
 #endif
 
+#define DEBUG_TASK_LIST
+
 
 /* === M A C R O S ========================================================= */
 
