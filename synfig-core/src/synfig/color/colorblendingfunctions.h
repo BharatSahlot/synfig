@@ -308,7 +308,7 @@ C blendfunc_ALPHA_BRIGHTEN(C &a,C &b,float amount)
 {
 	// \todo can this be right, multiplying amount by *b*'s alpha?
 	// compare with blendfunc_BRIGHTEN where it is multiplied by *a*'s
-	if(a.get_a() < b.get_a()*amount)
+	if(a.get_a() + COLOR_EPSILON < b.get_a()*amount)
 		return a.set_a(a.get_a()*amount);
 	return b;
 }
@@ -316,7 +316,7 @@ C blendfunc_ALPHA_BRIGHTEN(C &a,C &b,float amount)
 template <class C>
 C blendfunc_ALPHA_DARKEN(C &a,C &b,float amount)
 {
-	if(a.get_a()*amount > b.get_a())
+	if(a.get_a() * amount > b.get_a() + COLOR_EPSILON)
 		return a.set_a(a.get_a()*amount);
 	return b;
 }
