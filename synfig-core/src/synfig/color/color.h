@@ -323,12 +323,11 @@ public:
 
 	/* Other */
 	static Color blend(Color a, Color b, float amount);
-
 	static Color blend(Color a, Color b, float amount, BlendMethod type);
 
-	static void blend_buf(const Color* src, Color* dest, float amount, size_t n, const BlendMethod type=BLEND_COMPOSITE);
+	static void blend_buf(Color* src, Color* dest, float amount, size_t n, BlendMethod type=BLEND_COMPOSITE);
 
-	static void blend_buf(const Color* srcA, Color srcB, Color* dest, float amount, size_t n, const BlendMethod type=BLEND_COMPOSITE);
+	static void blend_buf(Color* srcA, Color srcB, Color* dest, float amount, size_t n, BlendMethod type=BLEND_COMPOSITE);
 
 	static bool is_onto(BlendMethod x)
 		{ return BLEND_METHODS_ONTO & (1 << x); }

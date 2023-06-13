@@ -141,6 +141,7 @@ synfig::Surface::blit_to(alpha_pen& pen, int x, int y, int w, int h)
 {
 	static const float epsilon(0.00001);
 	const float alpha(pen.get_alpha());
+
 	if(	pen.get_blend_method()==Color::BLEND_STRAIGHT && fabs(alpha-1.0f)<epsilon )
 	{
 		if(x>=get_w() || y>=get_w())
@@ -236,6 +237,41 @@ synfig::Surface::blit_to(alpha_pen& pen, int x, int y, int w, int h)
 		return;
 	}
 #endif
+
+	// if(x>=get_w() || y>=get_h())
+	// 	return;
+	//
+	// //clip source origin
+	// if(x<0)
+	// {
+	// 	w+=x;	//decrease
+	// 	x=0;
+	// }
+	//
+	// if(y<0)
+	// {
+	// 	h+=y;	//decrease
+	// 	y=0;
+	// }
+	//
+	// //clip width against dest width
+	// w = std::min((long)w,(long)(pen.end_x()-pen.x()));
+	// h = std::min((long)h,(long)(pen.end_y()-pen.y()));
+	//
+	// //clip width against src width
+	// w = std::min(w,get_w()-x);
+	// h = std::min(h,get_h()-y);
+	//
+	// if(w<=0 || h<=0)
+	// 	return;
+	//
+	//
+	// Color* src = (operator[](y)) + x;
+	// Color* dest = pen.x();
+	// for(int i = 0; i < h; i++, src += get_w(), dest += pen.get_width())
+	// {
+	// 	Color::blend_buf(src, dest, alpha, w, pen.get_blend_method());
+	// }
 	surface<Color, ColorPrep>::blit_to(pen,x,y,w,h);
 }
 

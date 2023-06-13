@@ -429,13 +429,21 @@ public:
 			fill(value_type());
 	}
 
+	// iterator_x
+	// operator[](const int &y)
+	// { assert(data_); return (pointer)(((char*)data_)+y*pitch_); }
+	//
+	// const_iterator_x
+	// operator[](const int &y)const
+	// { assert(data_); return (const_pointer)(((const char*)data_)+y*pitch_); }
+
 	iterator_x
 	operator[](const int &y)
-	{ assert(data_); return (pointer)(((char*)data_)+y*pitch_); }
+	{ assert(data_); return data_ + y * w_; }
 
 	const_iterator_x
 	operator[](const int &y)const
-	{ assert(data_); return (const_pointer)(((const char*)data_)+y*pitch_); }
+	{ assert(data_); return data_ + y * w_; }
 
 
 	bool is_valid()const
