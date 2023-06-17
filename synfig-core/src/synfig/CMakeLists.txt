@@ -130,6 +130,8 @@ target_link_libraries(libsynfig PUBLIC
 	${Intl_LIBRARIES}
 )
 
+target_link_libraries(libsynfig PUBLIC fftw3_threads)
+
 if (MLT_FOUND)
 	target_link_libraries(libsynfig PUBLIC PkgConfig::MLT)
 endif ()

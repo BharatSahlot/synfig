@@ -80,6 +80,9 @@ software::FFT::initialize()
 			for(int c5 = c3; c5 < max5; c5 *= 5)
 				for(int c7 = c5; c7 < max7; c7 *= 7)
 					Internal::counts.insert(c7);
+
+	fftw_init_threads();
+	fftw_plan_with_nthreads(4);
 	fftw_set_timelimit(0.0);
 }
 
